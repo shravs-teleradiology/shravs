@@ -1,0 +1,11 @@
+{
+  "name": "shravs-backend-netlify",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
