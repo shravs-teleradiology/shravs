@@ -1,104 +1,82 @@
-// js/api.js
+// js/api.js - All API calls
 const API_BASE = "/api";
 
-function getToken() {
-  return localStorage.getItem("token") || "";
-}
-
-function setToken(token) {
-  localStorage.setItem("token", token);
-}
-
-function clearToken() {
-  localStorage.removeItem("token");
-}
-
-async function request(path, { method = "GET", body = null } = {}) {
+async function request(path, opts = {}) {
+  const token = localStorage.getItem("token");
   const headers = { "Content-Type": "application/json" };
-  const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${API_BASE}${path}`, {
-    method,
+    method: opts.method || "GET",
     headers,
-    body: body ? JSON.stringify(body) : null,
+    body: opts.body ? JSON.stringify(opts.body) : null
   });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
 
-// ---------- Auth ----------
-export async function authLogin(email, password) {
+// Auth
+export async function login(email, password) {
   const data = await request("/auth-login", { method: "POST", body: { email, password } });
-  if (!data.access_token) throw new Error("No token returned");
-  setToken(data.access_token);
+  localStorage.setItem("token", data.access_token);
   return data;
 }
 
-export async function authMe() {
-  const data = await request("/auth-me");
-  return data.profile;
+export async function getMe() {
+  return await request("/auth-me");
+}
+
+// Profiles
+export async function updateProfile({ name, photo_url }) {
+  return await request("/profiles", { method: "PATCH", body: { name, photo_url } });
+}
+
+// Tasks
+export async function getTasks() {
+  return (await request("/tasks")).tasks || [];
+}
+
+export async function setTaskStatus(id, status) {
+  return await request("/tasks", { method: "PATCH", body: { id, status } });
+}
+
+// Chat
+export async function createDmRoom(peer_id) {
+  return (await request("/dm-room", { method: "POST", body: { peer_id } })).room;
+}
+
+export async function getMessages({ room_type, dm_room_id, limit = 50 }) {
+  const params = new URLSearchParams({ room_type, limit: String(limit) });
+  if (dm_room_id) params.set("dm_room_id", dm_room_id);
+  return (await request(`/messages?${params}`)).messages || [];
+}
+
+export async function sendMessage({ room_type, dm_room_id, text }) {
+  return await request("/messages", {
+    method: "POST",
+    body: { room_type, dm_room_id, text }
+  });
+}
+
+// Doctor queries
+export async function createDoctorQuery({ type, name, designation, email, phone, message }) {
+  return await request("/doctor-queries", {
+    method: "POST",
+    body: { type, name, designation, email, phone, message }
+  });
+}
+
+// Admin approvals
+export async function adminApproveDoctor(doctor_id) {
+  return await request("/admin-approve-doctor", {
+    method: "POST",
+    body: { doctor_id }
+  });
 }
 
 export function logout() {
-  clearToken();
+  localStorage.removeItem("token");
   window.location.href = "login.html";
-}
-
-// ---------- Admin: create employee, set role ----------
-export async function adminCreateEmployee({ name, email, password, organization }) {
-  return request("/admin-create-employee", {
-    method: "POST",
-    body: { name, email, password, organization },
-  });
-}
-
-export async function adminSetRole({ user_id, role }) {
-  return request("/admin-set-role", {
-    method: "PATCH",
-    body: { user_id, role },
-  });
-}
-
-// ---------- DM room ----------
-export async function dmRoom(peer_id) {
-  const data = await request("/dm-room", { method: "POST", body: { peer_id } });
-  return data.room;
-}
-
-// ---------- Tasks ----------
-export async function tasksList() {
-  const data = await request("/tasks");
-  return data.tasks || [];
-}
-
-export async function tasksAssign({ title, description, priority, due_date, assigned_to }) {
-  const data = await request("/tasks", {
-    method: "POST",
-    body: { title, description, priority, due_date, assigned_to },
-  });
-  return data.task;
-}
-
-export async function tasksSetStatus({ id, status }) {
-  const data = await request("/tasks", { method: "PATCH", body: { id, status } });
-  return data.task;
-}
-
-// ---------- Messages ----------
-export async function messagesList({ room_type = "common", dm_room_id = null, limit = 50 }) {
-  const params = new URLSearchParams({ room_type, limit: String(limit) });
-  if (dm_room_id) params.set("dm_room_id", dm_room_id);
-  const data = await request(`/messages?${params.toString()}`);
-  return data.messages || [];
-}
-
-export async function messagesSend({ room_type, dm_room_id = null, text = "", attachment_url = null }) {
-  const data = await request("/messages", {
-    method: "POST",
-    body: { room_type, dm_room_id, text, attachment_url },
-  });
-  return data.message;
 }
