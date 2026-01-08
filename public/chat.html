@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat - Shravs Teleradiology</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background:#000; color:#fff; }
+
+    .header {
+      background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+      border-bottom: 2px solid #0ea5e9;
+      padding: 14px 20px;
+      display:flex; justify-content:space-between; align-items:center;
+      gap: 10px;
+    }
+    .header-left { display:flex; align-items:center; gap:12px; }
+    .logo { width:54px; height:54px; border-radius:50%; border:2px solid #fff; object-fit:cover; }
+    .title { font-size:1.05em; text-transform:uppercase; letter-spacing:1px; }
+    .subtitle { font-size:0.8em; color:#9aa; margin-top:2px; }
+    .header-actions a, .header-actions button {
+      padding:8px 14px; border-radius:18px;
+      border:1px solid #0ea5e9; background:transparent; color:#0ea5e9;
+      cursor:pointer; font-size:0.8em; text-decoration:none;
+      text-transform:uppercase; letter-spacing:0.5px;
+    }
+    .header-actions a:hover, .header-actions button:hover { background:#0ea5e9; color:#fff; }
+
+    .container { max-width:1200px; margin:18px auto; padding:0 14px 30px; }
+
+    .tabs { display:flex; gap:10px; border-bottom:1px solid #222; padding-bottom:10px; margin-bottom:14px; }
+    .tab-btn {
+      padding:10px 14px; border-radius:18px;
+      border:1px solid #333; background:#0a0a0a; color:#bbb;
+      cursor:pointer; font-weight:700; font-size:0.85em;
+      text-transform:uppercase; letter-spacing:0.6px;
+    }
+    .tab-btn.active { border-color:#0ea5e9; color:#0ea5e9; box-shadow:0 0 0 2px rgba(14,165,233,0.12) inset; }
+    .tab-btn:hover { border-color:#06b6d4; color:#06b6d4; }
+
+    .panel { display:none; }
+    .panel.active { display:block; }
+
+    /* Common chat */
+    .chat-box {
+      border:2px solid #333; border-radius:12px; background:#050505;
+      display:flex; flex-direction:column; height:72vh; max-height:680px;
+    }
+    .chat-messages { flex:1; padding:14px; overflow-y:auto; }
+    .empty { padding:20px; text-align:center; color:#666; }
+
+    .msg {
+      margin-bottom:12px; padding:10px 12px;
+      border-radius:10px; border:1px solid #222; background:#111;
+    }
+    .msg-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:4px; }
+    .msg-author { color:#0ea5e9; font-weight:700; font-size:0.92em; }
+    .msg-meta { color:#777; font-size:0.75em; }
+    .msg-text { color:#ddd; font-size:0.95em; white-space:pre-wrap; }
+
+    .attachment { margin-top:6px; font-size:0.85em; }
+    .attachment a { color:#22c55e; text-decoration:none; }
+    .attachment a:hover { text-decoration:underline; }
+
+    .chat-input {
+      border-top:1px solid #222; padding:10px 12px; background:#0a0a0a;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .chat-input.drag-over { background:#04151f; border-top-color:#0ea5e9; }
+
+    .input-top { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+    .file-pill {
+      padding:6px 10px; border-radius:16px; border:1px dashed #444;
+      color:#aaa; font-size:0.8em; cursor:pointer; user-select:none;
+    }
+    .file-name { color:#ccc; font-size:0.8em; }
+    .note { width:100%; color:#777; font-size:0.75em; margin-top:2px; }
+
+    .input-bottom { display:flex; gap:10px; }
+    textarea {
+      flex:1; resize:none; min-height:42px; max-height:110px;
+      padding:8px 10px; border-radius:8px; border:1px solid #333;
+      background:#000; color:#fff; font-size:0.95em;
+    }
+    textarea:focus { outline:none; border-color:#0ea5e9; }
+    .send-btn {
+      padding:10px 18px; border-radius:20px; border:1px solid #0ea5e9;
+      background:linear-gradient(135deg,#0ea5e9,#06b6d4);
+      color:#fff; cursor:pointer; font-weight:800;
+      text-transform:uppercase; letter-spacing:0.6px; font-size:0.85em;
+    }
+    .send-btn:hover { filter:brightness(1.08); }
+
+    /* DM layout */
+    .dm-layout { display:grid; grid-template-columns: 320px 1fr; gap:14px; }
+    .dm-left {
+      border:2px solid #333; border-radius:12px; background:#050505;
+      overflow:hidden; height:72vh; max-height:680px;
+      display:flex; flex-direction:column;
+    }
+    .dm-search { padding:10px; border-bottom:1px solid #222; background:#0a0a0a; }
+    .dm-search input {
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid #333;
+      background:#000; color:#fff;
+    }
+    .dm-users { padding:8px; overflow-y:auto; }
+    .dm-user {
+      padding:10px 10px; border-radius:10px; border:1px solid transparent;
+      cursor:pointer; color:#ddd;
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .dm-user:hover { background:#0f0f0f; }
+    .dm-user.active { border-color:#0ea5e9; background:#071018; }
+    .dm-user small { color:#888; }
+
+    .dm-right .chat-box { height:72vh; max-height:680px; }
+
+    @media (max-width: 900px) {
+      .dm-layout { grid-template-columns: 1fr; }
+      .dm-left { height:auto; max-height:none; }
+      .dm-right .chat-box { height:60vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <img class="logo" src="https://i.ibb.co/FL6BLkS/P-Untitled-design.png" alt="Logo" />
+      <div>
+        <div class="title">Chat</div>
+        <div class="subtitle" id="whoAmI">Loading...</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="index.html">Home</a>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" id="tabCommon" onclick="showTab('common')">Common Chat</button>
+      <button class="tab-btn" id="tabDm" onclick="showTab('dm')">Direct Messages</button>
+    </div>
+
+    <!-- Common Chat -->
+    <div class="panel active" id="panelCommon">
+      <div class="chat-box">
+        <div class="chat-messages" id="commonMessages"></div>
+
+        <div class="chat-input" id="commonDropZone">
+          <div class="input-top">
+            <label class="file-pill">
+              📎 Attach
+              <input id="commonFile" type="file" style="display:none"
+                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt" />
+              <span class="file-name" id="commonFileName">No file</span>
+            </label>
+            <div class="note" id="commonNote"></div>
+          </div>
+          <div class="input-bottom">
+            <textarea id="commonText" placeholder="Type message..."></textarea>
+            <button class="send-btn" onclick="sendCommon()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direct Messages (hidden for admin) -->
+    <div class="panel" id="panelDm">
+      <div class="dm-layout">
+        <div class="dm-left">
+          <div class="dm-search">
+            <input id="dmSearch" placeholder="Search people..." oninput="renderDmUsers()" />
+          </div>
+          <div class="dm-users" id="dmUsers"></div>
+        </div>
+
+        <div class="dm-right">
+          <div class="chat-box">
+            <div class="chat-messages" id="dmMessages"></div>
+
+            <div class="chat-input" id="dmDropZone">
+              <div class="input-top">
+                <label class="file-pill">
+                  📎 Attach
+                  <input id="dmFile" type="file" style="display:none"
+                         accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.txt" />
+                  <span class="file-name" id="dmFileName">No file</span>
+                </label>
+                <div class="note" id="dmNote"></div>
+              </div>
+              <div class="input-bottom">
+                <textarea id="dmText" placeholder="Type private message..."></textarea>
+                <button class="send-btn" onclick="sendDm()">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:10px;">
+        Private chats are only visible to the two participants (admin will not see this tab).
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ====== CONFIG ======
+  const MAX_FILE_MB = 3;
+  const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
+
+  const COMMON_KEY = "commonChatMessages_v1";
+  const DM_KEY = "directMessages_v1"; // object: { convId: [messages...] }
+
+  // ====== AUTH / IDENTITY ======
+  const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+  const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+
+  let me = null;              // {name,email,role}
+  let dmPeer = null;          // {name,email,role}
+  let pendingCommonFile = null;
+  let pendingDmFile = null;
+
+  function initIdentity() {
+    if (!isLoggedIn) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+      return false;
+    }
+
+    if (isAdmin) {
+      me = { name: "Admin", email: "admin@shravsteleradiology.com", role: "admin" };
+      document.getElementById("whoAmI").textContent = "Admin (common chat only)";
+      // Hide DM tab for admin
+      document.getElementById("tabDm").style.display = "none";
+      document.getElementById("panelDm").style.display = "none";
+      return true;
+    }
+
+    const currentUser = JSON.parse(sessionStorage.getItem("currentUser") || "null");
+    if (!currentUser) {
+      alert("Session expired. Please login again.");
+      window.location.href = "login.html";
+      return false;
+    }
+    me = { name: currentUser.name, email: currentUser.email, role: currentUser.role };
+    document.getElementById("whoAmI").textContent = `${me.name} (${me.role})`;
+    return true;
+  }
+
+  // ====== UTILS ======
+  function escapeHtml(text) {
+    return (text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function readJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; }
+    catch { return fallback; }
+  }
+
+  function writeJson(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      alert("Storage full. Delete older messages or use smaller attachments.");
+      return false;
+    }
+  }
+
+  function prettyTime(iso) {
+    try { return new Date(iso).toLocaleString(); }
+    catch { return iso; }
+  }
+
+  function handleSelectedFile(file, setPending, setNameEl) {
+    if (!file) {
+      setPending(null);
+      setNameEl.textContent = "No file";
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      alert(`File too large. Max ${MAX_FILE_MB} MB.`);
+      setPending(null);
+      setNameEl.textContent = "No file";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPending({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        dataUrl: e.target.result
+      });
+    };
+    reader.readAsDataURL(file);
+    setNameEl.textContent = file.name;
+  }
+
+  function setupDropZone(zoneEl, onFile) {
+    const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+    ["dragenter", "dragover", "dragleave", "drop"].forEach(evt => zoneEl.addEventListener(evt, prevent, false));
+    ["dragenter", "dragover"].forEach(evt => zoneEl.addEventListener(evt, () => zoneEl.classList.add("drag-over"), false));
+    ["dragleave", "drop"].forEach(evt => zoneEl.addEventListener(evt, () => zoneEl.classList.remove("drag-over"), false));
+    zoneEl.addEventListener("drop", (e) => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) onFile(f);
+    }, false);
+  }
+
+  // ====== TABS ======
+  function showTab(tab) {
+    document.getElementById("tabCommon").classList.remove("active");
+    document.getElementById("tabDm").classList.remove("active");
+    document.getElementById("panelCommon").classList.remove("active");
+    document.getElementById("panelDm").classList.remove("active");
+
+    if (tab === "dm" && isAdmin) return; // hard block
+
+    if (tab === "dm") {
+      document.getElementById("tabDm").classList.add("active");
+      document.getElementById("panelDm").classList.add("active");
+      renderDmUsers();
+      renderDmMessages();
+    } else {
+      document.getElementById("tabCommon").classList.add("active");
+      document.getElementById("panelCommon").classList.add("active");
+      renderCommon();
+    }
+  }
+
+  // ====== COMMON CHAT ======
+  function renderCommon() {
+    const list = readJson(COMMON_KEY, []);
+    const box = document.getElementById("commonMessages");
+
+    if (!list.length) {
+      box.innerHTML = `<div class="empty">No messages yet.</div>`;
+      return;
+    }
+
+    list.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    let html = "";
+    for (const msg of list) {
+      html += `
+        <div class="msg">
+          <div class="msg-head">
+            <div class="msg-author">${escapeHtml(msg.authorName)} <span style="color:#777;font-weight:600;">(${escapeHtml(msg.authorRole)})</span></div>
+            <div class="msg-meta">${prettyTime(msg.timestamp)}</div>
+          </div>
+          <div class="msg-text">${escapeHtml(msg.text || "")}</div>
+      `;
+
+      if (msg.attachment && msg.attachment.dataUrl && msg.attachment.name) {
+        html += `
+          <div class="attachment">
+            📎 <a href="${msg.attachment.dataUrl}" download="${escapeHtml(msg.attachment.name)}" target="_blank">
+              ${escapeHtml(msg.attachment.name)}
+            </a>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+    }
+
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendCommon() {
+    const textEl = document.getElementById("commonText");
+    const text = (textEl.value || "").trim();
+    if (!text && !pendingCommonFile) return;
+
+    const list = readJson(COMMON_KEY, []);
+    list.push({
+      authorEmail: me.email,
+      authorName: me.name,
+      authorRole: me.role,
+      text,
+      timestamp: new Date().toISOString(),
+      attachment: pendingCommonFile
+    });
+
+    if (!writeJson(COMMON_KEY, list)) return;
+
+    textEl.value = "";
+    pendingCommonFile = null;
+    document.getElementById("commonFileName").textContent = "No file";
+    document.getElementById("commonFile").value = "";
+    renderCommon();
+  }
+
+  // ====== DIRECT MESSAGES (NOT FOR ADMIN) ======
+  function getAllPeople() {
+    // Everyone means: all accounts stored in localStorage "users"
+    // Admin is not stored there, so admin won't appear in list.
+    const users = readJson("users", []);
+    // Remove duplicates and remove self
+    const seen = new Set();
+    const out = [];
+    for (const u of users) {
+      if (!u || !u.email) continue;
+      const email = String(u.email).toLowerCase();
+      if (email === String(me.email).toLowerCase()) continue;
+      if (seen.has(email)) continue;
+      seen.add(email);
+      out.push({ name: u.name || email, email: u.email, role: u.role || "user" });
+    }
+    // Sort by name
+    out.sort((a,b) => (a.name || "").localeCompare(b.name || ""));
+    return out;
+  }
+
+  function convId(a, b) {
+    const x = String(a).toLowerCase();
+    const y = String(b).toLowerCase();
+    return x < y ? `dm:${x}|${y}` : `dm:${y}|${x}`;
+  }
+
+  function getDmStore() {
+    return readJson(DM_KEY, {}); // object
+  }
+
+  function saveDmStore(store) {
+    return writeJson(DM_KEY, store);
+  }
+
+  function renderDmUsers() {
+    if (isAdmin) return;
+
+    const q = (document.getElementById("dmSearch").value || "").toLowerCase();
+    const list = getAllPeople().filter(p =>
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.email || "").toLowerCase().includes(q) ||
+      (p.role || "").toLowerCase().includes(q)
+    );
+
+    const box = document.getElementById("dmUsers");
+    if (!list.length) {
+      box.innerHTML = `<div class="empty">No users found.</div>`;
+      return;
+    }
+
+    // default select first if none selected
+    if (!dmPeer) dmPeer = list[0];
+
+    box.innerHTML = list.map(p => {
+      const active = dmPeer && String(dmPeer.email).toLowerCase() === String(p.email).toLowerCase();
+      return `
+        <div class="dm-user ${active ? "active" : ""}" onclick="selectPeer('${encodeURIComponent(p.email)}')">
+          <div style="font-weight:700;">${escapeHtml(p.name)}</div>
+          <small>${escapeHtml(p.email)} • ${escapeHtml(p.role)}</small>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function selectPeer(encodedEmail) {
+    if (isAdmin) return;
+    const email = decodeURIComponent(encodedEmail);
+    const people = getAllPeople();
+    dmPeer = people.find(p => String(p.email).toLowerCase() === String(email).toLowerCase()) || null;
+    renderDmUsers();
+    renderDmMessages();
+  }
+
+  function renderDmMessages() {
+    if (isAdmin) return;
+
+    const box = document.getElementById("dmMessages");
+    if (!dmPeer) {
+      box.innerHTML = `<div class="empty">Select a person to start.</div>`;
+      return;
+    }
+
+    const store = getDmStore();
+    const id = convId(me.email, dmPeer.email);
+    const list = store[id] || [];
+
+    if (!list.length) {
+      box.innerHTML = `<div class="empty">No messages with ${escapeHtml(dmPeer.name)} yet.</div>`;
+      return;
+    }
+
+    list.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    let html = "";
+    for (const msg of list) {
+      html += `
+        <div class="msg">
+          <div class="msg-head">
+            <div class="msg-author">${escapeHtml(msg.authorName)}</div>
+            <div class="msg-meta">${prettyTime(msg.timestamp)}</div>
+          </div>
+          <div class="msg-text">${escapeHtml(msg.text || "")}</div>
+      `;
+
+      if (msg.attachment && msg.attachment.dataUrl && msg.attachment.name) {
+        html += `
+          <div class="attachment">
+            📎 <a href="${msg.attachment.dataUrl}" download="${escapeHtml(msg.attachment.name)}" target="_blank">
+              ${escapeHtml(msg.attachment.name)}
+            </a>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+    }
+
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendDm() {
+    if (isAdmin) return;
+    if (!dmPeer) { alert("Select a person first."); return; }
+
+    const textEl = document.getElementById("dmText");
+    const text = (textEl.value || "").trim();
+    if (!text && !pendingDmFile) return;
+
+    const store = getDmStore();
+    const id = convId(me.email, dmPeer.email);
+    store[id] = store[id] || [];
+    store[id].push({
+      authorEmail: me.email,
+      authorName: me.name,
+      toEmail: dmPeer.email,
+      text,
+      timestamp: new Date().toISOString(),
+      attachment: pendingDmFile
+    });
+
+    if (!saveDmStore(store)) return;
+
+    textEl.value = "";
+    pendingDmFile = null;
+    document.getElementById("dmFileName").textContent = "No file";
+    document.getElementById("dmFile").value = "";
+    renderDmMessages();
+  }
+
+  // ====== LOGOUT ======
+  function logout() {
+    if (confirm("Are you sure you want to logout?")) {
+      sessionStorage.clear();
+      window.location.href = "login.html";
+    }
+  }
+
+  // ====== INIT ======
+  window.addEventListener("load", () => {
+    if (!initIdentity()) return;
+
+    document.getElementById("commonNote").textContent =
+      `Common chat (Admin can read/post). Max file size: ${MAX_FILE_MB} MB. Drag & drop supported.`;
+
+    const commonFile = document.getElementById("commonFile");
+    commonFile.addEventListener("change", function () {
+      handleSelectedFile(this.files[0], f => pendingCommonFile = f, document.getElementById("commonFileName"));
+    });
+
+    setupDropZone(document.getElementById("commonDropZone"), (file) => {
+      handleSelectedFile(file, f => pendingCommonFile = f, document.getElementById("commonFileName"));
+    });
+
+    if (!isAdmin) {
+      document.getElementById("dmNote").textContent =
+        `Private chat (Admin cannot see this). Max file size: ${MAX_FILE_MB} MB. Drag & drop supported.`;
+
+      const dmFile = document.getElementById("dmFile");
+      dmFile.addEventListener("change", function () {
+        handleSelectedFile(this.files[0], f => pendingDmFile = f, document.getElementById("dmFileName"));
+      });
+
+      setupDropZone(document.getElementById("dmDropZone"), (file) => {
+        handleSelectedFile(file, f => pendingDmFile = f, document.getElementById("dmFileName"));
+      });
+    }
+
+    renderCommon();
+    setInterval(() => {
+      // refresh common always
+      renderCommon();
+      // refresh dm only if not admin and dm tab active
+      if (!isAdmin && document.getElementById("panelDm").classList.contains("active")) {
+        renderDmMessages();
+      }
+    }, 4000);
+  });
+</script>
+</body>
+</html>
