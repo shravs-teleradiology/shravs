@@ -1,99 +1,104 @@
-// public/js/api.js - Replace ALL your localStorage calls with this
-const API_BASE = '/api'; // Netlify proxies to functions
+// js/api.js
+const API_BASE = "/api";
 
-async function api(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
-  const config = {
-    headers: { 'Content-Type': 'application/json' },
-    ...options
-  };
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${API_BASE}${endpoint}`, config);
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: 'Network error' }));
-    throw error;
-  }
-  return res.json();
+function getToken() {
+  return localStorage.getItem("token") || "";
 }
 
-// ========= AUTH =========
-export async function login(email, password) {
-  const data = await api('/auth-login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password })
+function setToken(token) {
+  localStorage.setItem("token", token);
+}
+
+function clearToken() {
+  localStorage.removeItem("token");
+}
+
+async function request(path, { method = "GET", body = null } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
   });
-  localStorage.setItem('token', data.access_token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  return data.user;
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
 }
 
-export async function getMe() {
-  const data = await api('/auth-me');
+// ---------- Auth ----------
+export async function authLogin(email, password) {
+  const data = await request("/auth-login", { method: "POST", body: { email, password } });
+  if (!data.access_token) throw new Error("No token returned");
+  setToken(data.access_token);
+  return data;
+}
+
+export async function authMe() {
+  const data = await request("/auth-me");
   return data.profile;
 }
 
-// ========= EMPLOYEES (Admin) =========
-export async function createEmployee({ name, email, password, organization }) {
-  const data = await api('/admin-create-employee', {
-    method: 'POST',
-    body: JSON.stringify({ name, email, password, organization })
-  });
-  return data;
+export function logout() {
+  clearToken();
+  window.location.href = "login.html";
 }
 
-export async function setRole(user_id, role) {
-  const data = await api('/admin-set-role', {
-    method: 'PATCH',
-    body: JSON.stringify({ user_id, role })
+// ---------- Admin: create employee, set role ----------
+export async function adminCreateEmployee({ name, email, password, organization }) {
+  return request("/admin-create-employee", {
+    method: "POST",
+    body: { name, email, password, organization },
   });
-  return data;
 }
 
-// ========= DM =========
-export async function createDmRoom(peer_id) {
-  const data = await api('/dm-room', {
-    method: 'POST',
-    body: JSON.stringify({ peer_id })
+export async function adminSetRole({ user_id, role }) {
+  return request("/admin-set-role", {
+    method: "PATCH",
+    body: { user_id, role },
   });
+}
+
+// ---------- DM room ----------
+export async function dmRoom(peer_id) {
+  const data = await request("/dm-room", { method: "POST", body: { peer_id } });
   return data.room;
 }
 
-// ========= TASKS =========
-export async function getTasks() {
-  const data = await api('/tasks');
-  return data.tasks;
+// ---------- Tasks ----------
+export async function tasksList() {
+  const data = await request("/tasks");
+  return data.tasks || [];
 }
 
-export async function toggleTaskStatus(task_id, status) {
-  const data = await api('/tasks', {
-    method: 'PATCH',
-    body: JSON.stringify({ id: task_id, status })
+export async function tasksAssign({ title, description, priority, due_date, assigned_to }) {
+  const data = await request("/tasks", {
+    method: "POST",
+    body: { title, description, priority, due_date, assigned_to },
   });
   return data.task;
 }
 
-export async function assignTask(taskData) {
-  const data = await api('/tasks', {
-    method: 'POST',
-    body: JSON.stringify(taskData)
-  });
+export async function tasksSetStatus({ id, status }) {
+  const data = await request("/tasks", { method: "PATCH", body: { id, status } });
   return data.task;
 }
 
-// ========= MESSAGES =========
-export async function getMessages({ room_type = 'common', dm_room_id = null, limit = 50 }) {
-  const params = new URLSearchParams({ room_type });
-  if (dm_room_id) params.append('dm_room_id', dm_room_id);
-  if (limit) params.append('limit', limit);
-  const data = await api(`/messages?${params}`);
-  return data.messages;
+// ---------- Messages ----------
+export async function messagesList({ room_type = "common", dm_room_id = null, limit = 50 }) {
+  const params = new URLSearchParams({ room_type, limit: String(limit) });
+  if (dm_room_id) params.set("dm_room_id", dm_room_id);
+  const data = await request(`/messages?${params.toString()}`);
+  return data.messages || [];
 }
 
-export async function sendMessage({ room_type, dm_room_id = null, text }) {
-  const data = await api('/messages', {
-    method: 'POST',
-    body: JSON.stringify({ room_type, dm_room_id, text })
+export async function messagesSend({ room_type, dm_room_id = null, text = "", attachment_url = null }) {
+  const data = await request("/messages", {
+    method: "POST",
+    body: { room_type, dm_room_id, text, attachment_url },
   });
   return data.message;
 }
