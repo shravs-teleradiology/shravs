@@ -1,40 +1,24 @@
-function corsHeaders() {
-  const origin = process.env.CORS_ORIGIN || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-  };
-}
+export const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+};
 
-function json(statusCode, data) {
+export function json(statusCode, body) {
   return {
     statusCode,
-    headers: { "Content-Type": "application/json", ...corsHeaders() },
-    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+    body: JSON.stringify(body),
   };
 }
 
-function ok(data) { return json(200, data); }
-function badRequest(message) { return json(400, { error: message }); }
-function unauthorized(message = "Unauthorized") { return json(401, { error: message }); }
-function forbidden(message = "Forbidden") { return json(403, { error: message }); }
+export function ok(body) { return json(200, body); }
+export function bad(msg) { return json(400, { error: msg }); }
+export function unauth(msg="Unauthorized") { return json(401, { error: msg }); }
+export function forbid(msg="Forbidden") { return json(403, { error: msg }); }
+export function methodNotAllowed() { return json(405, { error: "Method not allowed" }); }
 
-function parseJsonBody(event) {
-  if (!event.body) return {};
-  try { return JSON.parse(event.body); }
-  catch { return null; }
+export function parseBody(event) {
+  try { return event.body ? JSON.parse(event.body) : {}; }
+  catch { return {}; }
 }
-
-function isOptions(event) {
-  return event.httpMethod === "OPTIONS";
-}
-
-function optionsOk() {
-  return { statusCode: 200, headers: corsHeaders(), body: "" };
-}
-
-module.exports = {
-  ok, json, badRequest, unauthorized, forbidden,
-  parseJsonBody, isOptions, optionsOk,
-};
