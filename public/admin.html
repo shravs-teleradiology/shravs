@@ -1,247 +1,614 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Dashboard - Shravs</title>
-  <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:#000;color:#fff}
-    header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:2px solid #0ea5e9;background:#0a0a0a;position:sticky;top:0;z-index:10}
-    .left{display:flex;align-items:center;gap:12px}
-    .logo{width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid #fff;background:#000}
-    .btn{padding:10px 14px;border-radius:999px;border:1px solid #0ea5e9;background:#0ea5e9;color:#000;font-weight:900;text-transform:uppercase;cursor:pointer}
-    .btn.ghost{background:transparent;color:#0ea5e9}
-    .btn.danger{border-color:#ef4444;background:#ef4444;color:#fff}
-    main{max-width:1200px;margin:0 auto;padding:18px 16px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media(max-width:980px){.grid{grid-template-columns:1fr}}
-    .card{border:1px solid #333;border-radius:14px;background:#0a0a0a;padding:16px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:10px;border-bottom:1px solid #222;text-align:left}
-    th{color:#0ea5e9;text-transform:uppercase;font-size:.82em;letter-spacing:.6px}
-    .hint{color:#777;font-size:.85em;margin-top:8px}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Shravs Teleradiology</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #000000; color: #ffffff; }
 
-    /* Chat */
-    .chat{display:grid;grid-template-columns:240px 1fr;gap:10px;margin-top:10px}
-    @media(max-width:980px){.chat{grid-template-columns:1fr}}
-    .rooms{border:1px solid #222;border-radius:12px;background:#000;padding:10px;max-height:420px;overflow:auto}
-    .room{padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
-    .room:hover{background:#0f0f0f}
-    .room.active{border-color:#0ea5e9;background:#071018}
-    .msgs{border:1px solid #222;border-radius:12px;background:#000;padding:10px;max-height:420px;overflow:auto}
-    .m{border:1px solid #1f1f1f;background:#101010;border-radius:12px;padding:10px;margin-bottom:10px}
-    .m .meta{display:flex;justify-content:space-between;color:#777;font-size:.8em;margin-bottom:6px}
-    .m .author{color:#0ea5e9;font-weight:900}
-    .composer{display:flex;gap:10px;margin-top:10px}
-    .composer input{flex:1}
-  </style>
+        .header {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            border-bottom: 2px solid #0ea5e9;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(14, 165, 233, 0.2);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        
+        .logo {
+            width: 50px; height: 50px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+        }
+
+        .header h1 { font-size: 1.5em; text-transform: uppercase; letter-spacing: 2px; }
+
+        .logout-btn {
+            padding: 10px 25px;
+            background: transparent;
+            color: #ff6b6b;
+            border: 2px solid #ff6b6b;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .logout-btn:hover { background: #ff6b6b; color: #ffffff; transform: translateY(-2px); }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            border: 2px solid #0ea5e9;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3); }
+
+        .stat-number { font-size: 3em; font-weight: bold; color: #0ea5e9; margin-bottom: 10px; }
+        .stat-label { font-size: 1em; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+
+        .section {
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+
+        .section-title { font-size: 1.5em; text-transform: uppercase; letter-spacing: 1px; color: #0ea5e9; }
+
+        .search-box {
+            padding: 10px 20px;
+            background: #000000;
+            border: 1px solid #333;
+            border-radius: 25px;
+            color: #ffffff;
+            width: 300px;
+        }
+
+        .search-box:focus { outline: none; border-color: #0ea5e9; }
+
+        .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+
+        .table th {
+            background: #000000;
+            color: #0ea5e9;
+            padding: 15px;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9em;
+            border-bottom: 2px solid #0ea5e9;
+        }
+
+        .table td { padding: 15px; border-bottom: 1px solid #333; color: #ccc; }
+        .table tr:hover { background: rgba(14, 165, 233, 0.05); }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+        }
+
+        .badge-read {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            border: 1px solid #4ade80;
+        }
+
+        .badge-unread {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-view {
+            background: rgba(14, 165, 233, 0.2);
+            color: #0ea5e9;
+            border: 1px solid #0ea5e9;
+        }
+
+        .btn-view:hover { background: #0ea5e9; color: #ffffff; }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .btn-delete:hover { background: #ef4444; color: #ffffff; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+        .empty-state-icon { font-size: 4em; margin-bottom: 20px; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            border: 2px solid #0ea5e9;
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 700px;
+            border-radius: 15px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            background: #000000;
+            padding: 20px 30px;
+            border-bottom: 2px solid #0ea5e9;
+            border-radius: 13px 13px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 { color: #0ea5e9; font-size: 1.5em; text-transform: uppercase; }
+
+        .close {
+            color: #999;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover { color: #ff6b6b; transform: rotate(90deg); }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .detail-row {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .detail-row:last-child { border-bottom: none; }
+
+        .detail-label {
+            font-weight: bold;
+            color: #0ea5e9;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .detail-value { color: #ccc; line-height: 1.6; }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 20px; padding: 20px; }
+            .stats { grid-template-columns: 1fr; }
+            .search-box { width: 100%; }
+            .table { font-size: 0.9em; }
+            .section { padding: 20px; }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="left">
-      <img class="logo" src="/logo.png" onerror="this.onerror=null;this.src='https://i.ibb.co/FL6BLkS/P-Untitled-design.png';" alt="Logo">
-      <div>
-        <div style="font-weight:900;">Admin Dashboard</div>
-        <div style="color:#aaa;font-size:.85em;" id="meLine"></div>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn danger" id="logoutBtn">Logout</button>
-    </div>
-  </header>
-
-  <main>
-    <div class="grid">
-      <div class="card">
-        <h3 style="margin:0;color:#0ea5e9;">Pending Doctor Approvals</h3>
-        <div id="pendingWrap" class="hint">Loading...</div>
-        <div class="hint">Requires backend: /api/admin/pending-doctors and /api/admin/approve-doctor</div>
-      </div>
-
-      <div class="card">
-        <h3 style="margin:0;color:#0ea5e9;">Team Lists</h3>
-        <div class="hint">Index page can load teams from /api/team?role=doctor/employee</div>
-        <div class="hint">Admins can manage roles via existing admin functions (if implemented).</div>
-      </div>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">S</div>
+            <h1>Admin Dashboard</h1>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
-    <div class="card" style="margin-top:14px;">
-      <h3 style="margin:0;color:#0ea5e9;">Chat (Common + DMs)</h3>
-      <div class="chat">
-        <div class="rooms" id="rooms">
-          <div class="room active" data-kind="common"># Common (All)</div>
-          <div style="color:#777;margin:10px 0 6px;font-weight:900;text-transform:uppercase;font-size:.75em;">Direct</div>
-          <div id="dmTargets" class="hint">Load employees/doctors via /api/team</div>
+    <div class="container">
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todaySignups">0</div>
+                <div class="stat-label">Today's Signups</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalQueries">0</div>
+                <div class="stat-label">Total Queries</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="unreadQueries">0</div>
+                <div class="stat-label">Unread Queries</div>
+            </div>
         </div>
 
-        <div>
-          <div class="msgs" id="msgs"></div>
-          <div class="composer">
-            <input id="msgText" placeholder="Type message...">
-            <button class="btn" id="sendBtn">Send</button>
-          </div>
+        <!-- User Queries Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">📬 User Queries</h2>
+                <input type="text" class="search-box" id="querySearch" placeholder="Search queries..." onkeyup="filterQueries()">
+            </div>
+            <div id="queriesTableContainer"></div>
         </div>
-      </div>
+
+        <!-- Registered Users Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">📋 Registered Users</h2>
+                <input type="text" class="search-box" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()">
+            </div>
+            <div id="usersTableContainer"></div>
+        </div>
     </div>
-  </main>
 
-  <script type="module">
-    const API_BASE = "/api";
-
-    function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[c])); }
-
-    async function api(path, { method="GET", body=null } = {}) {
-      const token = localStorage.getItem("token");
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : null });
-      const data = await res.json().catch(()=>({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      return data;
-    }
-
-    let me = null;
-    let active = { kind:"common", room_type:"common", dm_room_id:null };
-
-    async function guard(){
-      const out = await api("/auth-me");
-      me = out.profile;
-      document.getElementById("meLine").textContent = `${me.name} (${me.role})`;
-      if (me.role !== "admin") window.location.href = "login.html";
-    }
-
-    async function ensureDmRoom(peer_id){
-      const out = await api("/dm-room", { method:"POST", body:{ peer_id } });
-      return out.room;
-    }
-
-    async function loadMessages(){
-      const qs = new URLSearchParams({ room_type: active.room_type, limit: "80" });
-      if (active.room_type === "dm" && active.dm_room_id) qs.set("dm_room_id", active.dm_room_id);
-
-      const out = await api(`/messages?${qs.toString()}`);
-      const msgs = out.messages || [];
-      const box = document.getElementById("msgs");
-
-      if (!msgs.length) { box.innerHTML = `<div class="hint">No messages.</div>`; return; }
-
-      box.innerHTML = msgs.map(m => `
-        <div class="m">
-          <div class="meta">
-            <div><span class="author">${esc(m.author_id)}</span></div>
-            <div>${new Date(m.created_at).toLocaleString()}</div>
-          </div>
-          <div style="white-space:pre-wrap;">${esc(m.text || "")}</div>
+    <!-- Query Details Modal -->
+    <div id="queryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Query Details</h2>
+                <span class="close" onclick="closeQueryModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="queryDetails"></div>
         </div>
-      `).join("");
-      box.scrollTop = box.scrollHeight;
-    }
+    </div>
 
-    async function sendMessage(){
-      const textEl = document.getElementById("msgText");
-      const text = textEl.value.trim();
-      if (!text) return;
+    <script>
+        // Check admin authentication
+        if (sessionStorage.getItem('isAdmin') !== 'true') {
+            alert('Unauthorized access! Redirecting to login...');
+            window.location.href = 'login.html';
+        }
 
-      await api("/messages", { method:"POST", body:{
-        room_type: active.room_type,
-        dm_room_id: active.room_type === "dm" ? active.dm_room_id : null,
-        text
-      }});
+        // Load dashboard data
+        function loadDashboard() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const queries = JSON.parse(localStorage.getItem('queries') || '[]');
+            
+            // Update statistics
+            document.getElementById('totalUsers').textContent = users.length;
+            
+            const today = new Date().toDateString();
+            const todaySignups = users.filter(u => new Date(u.createdAt).toDateString() === today).length;
+            document.getElementById('todaySignups').textContent = todaySignups;
+            
+            document.getElementById('totalQueries').textContent = queries.length;
+            
+            const unreadQueries = queries.filter(q => !q.read).length;
+            document.getElementById('unreadQueries').textContent = unreadQueries;
+            
+            // Display tables
+            displayQueries(queries);
+            displayUsers(users);
+        }
 
-      textEl.value = "";
-      await loadMessages();
-    }
+        // Display queries in table
+        function displayQueries(queries) {
+            const container = document.getElementById('queriesTableContainer');
+            
+            if (queries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📬</div>
+                        <h3>No Queries Yet</h3>
+                        <p>User queries will appear here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by most recent first
+            queries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            let tableHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>From</th>
+                            <th>Email</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            queries.forEach((query, index) => {
+                const date = new Date(query.timestamp).toLocaleString();
+                const statusBadge = query.read ? 'badge-read' : 'badge-unread';
+                const statusText = query.read ? 'Read' : 'Unread';
+                
+                tableHTML += `
+                    <tr style="${!query.read ? 'background: rgba(239, 68, 68, 0.05);' : ''}">
+                        <td><strong>${query.type.toUpperCase()}</strong></td>
+                        <td>${query.name}</td>
+                        <td>${query.email}</td>
+                        <td>${date}</td>
+                        <td><span class="badge ${statusBadge}">${statusText}</span></td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="viewQuery(${index})">View</button>
+                            <button class="action-btn btn-delete" onclick="deleteQuery(${index})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `</tbody></table>`;
+            container.innerHTML = tableHTML;
+        }
 
-    async function loadPendingDoctors(){
-      const wrap = document.getElementById("pendingWrap");
-      try{
-        const out = await api("/admin/pending-doctors");
-        const items = out.items || [];
-        if (!items.length) { wrap.innerHTML = `<div class="hint">No pending doctors.</div>`; return; }
+        // Display users in table
+        function displayUsers(users) {
+            const container = document.getElementById('usersTableContainer');
+            
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>No Users Registered Yet</h3>
+                        <p>User registrations will appear here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let tableHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Organization</th>
+                            <th>Role</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            users.forEach((user, index) => {
+                const registeredDate = new Date(user.createdAt).toLocaleDateString();
+                tableHTML += `
+                    <tr>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.organization}</td>
+                        <td>${user.role}</td>
+                        <td>${registeredDate}</td>
+                        <td>
+                            <button class="action-btn btn-view" onclick="viewUser(${index})">View</button>
+                            <button class="action-btn btn-delete" onclick="deleteUser(${index})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `</tbody></table>`;
+            container.innerHTML = tableHTML;
+        }
 
-        wrap.innerHTML = `
-          <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Org</th><th>Action</th></tr></thead>
-            <tbody>
-              ${items.map(d => `
-                <tr>
-                  <td>${esc(d.name)}</td>
-                  <td>${esc(d.email)}</td>
-                  <td>${esc(d.organization || "")}</td>
-                  <td><button class="btn ghost" data-approve="${esc(d.id)}">Approve</button></td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        `;
+        // View query details
+        function viewQuery(index) {
+            const queries = JSON.parse(localStorage.getItem('queries') || '[]');
+            const query = queries[index];
+            
+            // Mark as read
+            query.read = true;
+            localStorage.setItem('queries', JSON.stringify(queries));
+            
+            const detailsHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Query Type</div>
+                    <div class="detail-value">${query.type.toUpperCase()}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Name</div>
+                    <div class="detail-value">${query.name}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Designation/Organization</div>
+                    <div class="detail-value">${query.designation}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value">${query.email}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Phone</div>
+                    <div class="detail-value">${query.phone}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Submitted By</div>
+                    <div class="detail-value">${query.submittedBy} (${query.submittedByEmail})</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Submitted On</div>
+                    <div class="detail-value">${new Date(query.timestamp).toLocaleString()}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Message</div>
+                    <div class="detail-value" style="white-space: pre-wrap;">${query.message}</div>
+                </div>
+            `;
+            
+            document.getElementById('queryDetails').innerHTML = detailsHTML;
+            document.getElementById('queryModal').style.display = 'block';
+            
+            // Reload dashboard to update unread count
+            loadDashboard();
+        }
 
-        wrap.querySelectorAll("[data-approve]").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-approve");
-            await api("/admin/approve-doctor", { method:"POST", body:{ doctor_id: id } });
-            await loadPendingDoctors();
-          });
-        });
-      } catch {
-        wrap.innerHTML = `<div class="hint">Approvals API not enabled yet.</div>`;
-      }
-    }
+        // Close query modal
+        function closeQueryModal() {
+            document.getElementById('queryModal').style.display = 'none';
+        }
 
-    async function loadDmTargets(){
-      const holder = document.getElementById("dmTargets");
-      holder.textContent = "Loading...";
-      try{
-        const emp = await api("/team?role=employee");
-        const doc = await api("/team?role=doctor");
-        const all = [...(emp.items||[]), ...(doc.items||[])].filter(p => p.id !== me.id);
+        // Delete query
+        function deleteQuery(index) {
+            if (!confirm('Are you sure you want to delete this query?')) return;
+            
+            const queries = JSON.parse(localStorage.getItem('queries') || '[]');
+            queries.splice(index, 1);
+            localStorage.setItem('queries', JSON.stringify(queries));
+            
+            alert('Query deleted successfully!');
+            loadDashboard();
+        }
 
-        if (!all.length) { holder.innerHTML = `<div class="hint">No team members.</div>`; return; }
+        // Filter queries
+        function filterQueries() {
+            const searchTerm = document.getElementById('querySearch').value.toLowerCase();
+            const queries = JSON.parse(localStorage.getItem('queries') || '[]');
+            
+            const filtered = queries.filter(q => 
+                q.name.toLowerCase().includes(searchTerm) ||
+                q.email.toLowerCase().includes(searchTerm) ||
+                q.type.toLowerCase().includes(searchTerm) ||
+                q.message.toLowerCase().includes(searchTerm)
+            );
+            
+            displayQueries(filtered);
+        }
 
-        holder.innerHTML = all.map(p => `
-          <div class="room" data-kind="dm" data-peer-id="${esc(p.id)}">${esc(p.name || p.email || p.id)}</div>
-        `).join("");
-      } catch {
-        holder.innerHTML = `<div class="hint">Team list API not enabled.</div>`;
-      }
-    }
+        // Filter users
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            const filtered = users.filter(u => 
+                u.name.toLowerCase().includes(searchTerm) ||
+                u.email.toLowerCase().includes(searchTerm) ||
+                u.organization.toLowerCase().includes(searchTerm)
+            );
+            
+            displayUsers(filtered);
+        }
 
-    document.getElementById("rooms").addEventListener("click", async (e) => {
-      const el = e.target.closest(".room");
-      if (!el) return;
+        // View user details
+        function viewUser(index) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users[index];
+            
+            alert(`User Details:
+━━━━━━━━━━━━━━━━━━━━
+Name: ${user.name}
+Email: ${user.email}
+Phone: ${user.phone}
+Organization: ${user.organization}
+Role: ${user.role}
+Registered: ${new Date(user.createdAt).toLocaleString()}`);
+        }
 
-      document.querySelectorAll(".room").forEach(x => x.classList.remove("active"));
-      el.classList.add("active");
+        // Delete user
+        function deleteUser(index) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            users.splice(index, 1);
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            alert('User deleted successfully!');
+            loadDashboard();
+        }
 
-      const kind = el.dataset.kind;
-      if (kind === "common") active = { kind, room_type:"common", dm_room_id:null };
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
 
-      if (kind === "dm") {
-        const peer_id = el.dataset.peerId;
-        const room = await ensureDmRoom(peer_id);
-        active = { kind, room_type:"dm", dm_room_id: room.id };
-      }
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('queryModal');
+            if (event.target == modal) {
+                closeQueryModal();
+            }
+        }
 
-      await loadMessages();
-    });
+        // Load dashboard on page load
+        window.onload = loadDashboard;
 
-    document.getElementById("sendBtn").addEventListener("click", sendMessage);
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("token");
-      window.location.href = "login.html";
-    });
-
-    (async () => {
-      try{
-        await guard();
-        await loadPendingDoctors();
-        await loadDmTargets();
-        await loadMessages();
-        setInterval(async () => { try{ await loadMessages(); } catch{} }, 5000);
-      } catch {
-        window.location.href = "login.html";
-      }
-    })();
-  </script>
+        // Refresh data every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
 </body>
 </html>
