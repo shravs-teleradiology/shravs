@@ -1,34 +1,43 @@
-const { supabaseUser } = require("./supabase");
+import { sbAnon, sbService } from "./supabase.js";
+import { unauth, forbid } from "./http.js";
 
-function getBearerToken(event) {
-  const h = event.headers || {};
-  const auth = h.authorization || h.Authorization || "";
-  const m = auth.match(/^Bearer\s+(.+)$/i);
+export function getBearerToken(event) {
+  const h = event.headers?.authorization || event.headers?.Authorization || "";
+  const m = h.match(/^Bearer\s+(.+)$/i);
   return m ? m[1] : null;
 }
 
-async function requireUser(event) {
+// Returns { user, profile, token }
+export async function requireAuth(event) {
   const token = getBearerToken(event);
-  if (!token) return { error: "No token" };
+  if (!token) return { error: unauth("Missing token") };
 
-  const sb = supabaseUser(token);
-  const { data, error } = await sb.auth.getUser();
-  if (error || !data?.user) return { error: "Invalid token" };
+  const sba = sbAnon(token);
+  const { data: u, error: uerr } = await sba.auth.getUser();
+  if (uerr || !u?.user) return { error: unauth("Invalid token") };
 
-  // Load profile (RLS allows self; admin can read all)
-  const { data: profile, error: pErr } = await sb
+  // IMPORTANT: profiles uses user_id
+  const { data: profile, error: perr } = await sba
     .from("profiles")
-    .select("id,email,name,role,organization")
-    .eq("id", data.user.id)
+    .select("*")
+    .eq("user_id", u.user.id)
     .single();
 
-  if (pErr || !profile) return { error: "Profile not found" };
-
-  return { token, sb, user: data.user, profile };
+  if (perr || !profile) return { error: unauth("Profile not found") };
+  return { token, user: u.user, profile };
 }
 
-function requireAdmin(profile) {
-  return profile && profile.role === "admin";
+export async function requireAdmin(event) {
+  const auth = await requireAuth(event);
+  if (auth.error) return auth;
+  if (auth.profile.role !== "admin") return { error: forbid("Admin only") };
+  return auth;
 }
 
-module.exports = { requireUser, requireAdmin };
+// Helper when you need to create/find profile by auth user id using service key
+export async function getProfileByUserIdService(user_id) {
+  const sbs = sbService();
+  const { data, error } = await sbs.from("profiles").select("*").eq("user_id", user_id).single();
+  if (error) throw new Error(error.message);
+  return data;
+}
