@@ -1186,8 +1186,8 @@
             }
         });
 
-        // Handle query submission - SAVE TO LOCALSTORAGE FOR ADMIN
-        submitBtn.addEventListener('click', () => {
+        // Handle query submission - SEND TO BACKEND (instead of localStorage)
+        submitBtn.addEventListener('click', async () => {
             if (!checkLoginStatus()) {
                 alert('Session expired. Please login again.');
                 window.location.href = 'login.html';
@@ -1195,55 +1195,65 @@
             }
 
             const inquiryType = document.getElementById('inquiryType').value;
-            const name = document.getElementById('name').value;
-            const designation = document.getElementById('designation').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
             const message = document.getElementById('message').value;
 
-            if (!inquiryType || !name || !designation || !email || !message) {
+            if (!inquiryType || !message) {
                 alert('Please fill in all required fields');
                 return;
             }
 
-            // Get current user info
-            const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+            const accessToken = sessionStorage.getItem('access_token');
+            if (!accessToken) {
+                alert('Please login to send a query. You will be redirected to the login page.');
+                window.location.href = 'login.html';
+                return;
+            }
 
-            // Save query to localStorage for admin to view
-            const queries = JSON.parse(localStorage.getItem('queries') || '[]');
-            queries.push({
-                type: inquiryType,
-                name,
-                designation,
-                email,
-                phone: phone || 'Not provided',
-                message,
-                submittedBy: currentUser.name || 'Unknown User',
-                submittedByEmail: currentUser.email || 'Unknown',
-                timestamp: new Date().toISOString(),
-                status: 'pending',
-                read: false
-            });
-            localStorage.setItem('queries', JSON.stringify(queries));
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
 
-            // Show success message
-            successMessage.classList.add('show');
-            
-            // Clear form
-            document.getElementById('inquiryType').value = '';
-            document.getElementById('name').value = '';
-            document.getElementById('designation').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('phone').value = '';
-            document.getElementById('message').value = '';
+            try {
+                const res = await fetch('/api/doctor-queries', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        type: inquiryType,
+                        message
+                    })
+                });
 
-            // Hide success message and close panel after 3 seconds
-            setTimeout(() => {
-                successMessage.classList.remove('show');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Failed to send query');
+
+                // Show success message
+                successMessage.classList.add('show');
+
+                // Clear form
+                document.getElementById('inquiryType').value = '';
+                document.getElementById('name').value = '';
+                document.getElementById('designation').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('phone').value = '';
+                document.getElementById('message').value = '';
+
+                // Hide success message and close panel after 3 seconds
                 setTimeout(() => {
-                    contactPanel.classList.remove('active');
-                }, 500);
-            }, 3000);
+                    successMessage.classList.remove('show');
+                    setTimeout(() => {
+                        contactPanel.classList.remove('active');
+                    }, 500);
+                }, 3000);
+
+            } catch (err) {
+                alert(err.message || 'Error sending query');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
         });
 
         // Smooth scrolling for anchor links
