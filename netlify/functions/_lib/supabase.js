@@ -1,27 +1,18 @@
-const { createClient } = require("@supabase/supabase-js");
+import { createClient } from "@supabase/supabase-js";
 
-function getEnv() {
-  const url = process.env.SUPABASE_URL;
-  const anon = process.env.SUPABASE_ANON_KEY;
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !anon) throw new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY");
-  return { url, anon, service };
-}
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const ANON = process.env.SUPABASE_ANON_KEY;
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-function supabaseUser(token) {
-  const { url, anon } = getEnv();
-  return createClient(url, anon, {
-    global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+export function sbAnon(token = null) {
+  return createClient(SUPABASE_URL, ANON, {
+    global: token ? { headers: { Authorization: `Bearer ${token}` } } : {},
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
-function supabaseAdmin() {
-  const { url, service } = getEnv();
-  if (!service) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
-  return createClient(url, service, {
+export function sbService() {
+  return createClient(SUPABASE_URL, SERVICE, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
-
-module.exports = { supabaseUser, supabaseAdmin };
