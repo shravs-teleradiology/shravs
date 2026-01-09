@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Shravs Teleradiology</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#000 0%,#1a1a1a 50%,#000 100%);color:#fff}
+    .card{width:100%;max-width:520px;background:#0a0a0a;border:2px solid #0ea5e9;border-radius:18px;padding:26px;box-shadow:0 10px 40px rgba(14,165,233,.25)}
+    .logo{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #fff;display:block;margin:0 auto 14px;background:#000}
+    h1{margin:0;text-align:center;letter-spacing:1px;text-transform:uppercase}
+    .sub{margin:8px 0 14px;text-align:center;color:#aaa}
+    .row{margin-top:12px}
+    label{display:block;margin-bottom:6px;color:#cfcfcf;font-weight:800;font-size:.85em;text-transform:uppercase;letter-spacing:.6px}
+    input,select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #333;background:#000;color:#fff}
+    input:focus,select:focus{outline:none;border-color:#0ea5e9;box-shadow:0 0 0 3px rgba(14,165,233,.12)}
+    .btn{width:100%;margin-top:14px;padding:12px 14px;border-radius:999px;border:2px solid #0ea5e9;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#001;font-weight:900;text-transform:uppercase;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .tabs{display:flex;gap:10px;margin:18px 0 0;border-bottom:1px solid #222;padding-bottom:10px}
+    .tab{flex:1;border:1px solid #333;background:#000;color:#bbb;padding:10px;border-radius:12px;cursor:pointer;font-weight:900;text-transform:uppercase;font-size:.9em}
+    .tab.active{border-color:#0ea5e9;color:#0ea5e9}
+    .panel{display:none;margin-top:14px}
+    .panel.active{display:block}
+    .msg{display:none;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #333;background:#050505;color:#bbb}
+    .msg.ok{display:block;border-color:#22c55e;background:#0f2f1c;color:#22c55e}
+    .msg.err{display:block;border-color:#ef4444;background:#2f0f0f;color:#ef4444}
+    .muted{color:#888;font-size:.92em;line-height:1.4;margin-top:10px}
+    a{color:#0ea5e9;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/logo.png" onerror="this.onerror=null;this.src='https://i.ibb.co/FL6BLkS/P-Untitled-design.png';" alt="Shravs Logo">
+    <h1>Shravs Portal</h1>
+    <div class="sub">Employees • Doctors • Admin</div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Login</button>
+      <button class="tab" data-tab="doctorSignup">Doctor Signup</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="panel active" id="panel-login">
+      <form id="loginForm">
+        <div class="row">
+          <label>Email</label>
+          <input id="loginEmail" type="email" required placeholder="you@example.com">
+        </div>
+        <div class="row">
+          <label>Password</label>
+          <input id="loginPassword" type="password" required placeholder="Password">
+        </div>
+        <button class="btn" type="submit">Login</button>
+        <div class="muted">
+          Admin creates employees. Doctors can request access using Doctor Signup (admin approval required).
+        </div>
+      </form>
+    </div>
+
+    <!-- DOCTOR SIGNUP (requires /api/doctor-signup backend endpoint) -->
+    <div class="panel" id="panel-doctorSignup">
+      <form id="doctorSignupForm">
+        <div class="row">
+          <label>Full name</label>
+          <input id="docName" required placeholder="Doctor name">
+        </div>
+        <div class="row">
+          <label>Email</label>
+          <input id="docEmail" type="email" required placeholder="doctor@example.com">
+        </div>
+        <div class="row">
+          <label>Password</label>
+          <input id="docPassword" type="password" required placeholder="Create password">
+        </div>
+        <div class="row">
+          <label>Designation/Clinic</label>
+          <input id="docOrg" required placeholder="Clinic/Hospital">
+        </div>
+        <button class="btn" type="submit">Request Approval</button>
+        <div class="muted">
+          This submits a request to Admin. If you haven’t added the doctor signup backend yet, this will show an error.
+        </div>
+      </form>
+    </div>
+
+    <div class="muted" style="margin-top:14px;text-align:center;">
+      Back to <a href="index.html">Home</a>
+    </div>
+  </div>
+
+  <script type="module">
+    // Minimal inline API so this file works even if you reorganize folders
+    const API_BASE = "/api";
+    const msg = document.getElementById("msg");
+
+    function show(text, type){
+      msg.textContent = text;
+      msg.className = "msg " + type;
+    }
+
+    async function api(path, { method="GET", body=null } = {}) {
+      const token = localStorage.getItem("token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : null });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+        msg.style.display = "none";
+      });
+    });
+
+    // Login
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try{
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        const data = await api("/auth-login", { method:"POST", body:{ email, password } });
+        localStorage.setItem("token", data.access_token);
+
+        const me = await api("/auth-me");
+        const role = me?.profile?.role || "user";
+        if (role === "admin") window.location.href = "admin.html";
+        else if (role === "doctor") window.location.href = "doctor.html";
+        else window.location.href = "employee.html";
+      } catch(err){
+        msg.style.display = "block";
+        show(err.message || "Login failed", "err");
+      }
+    });
+
+    // Doctor signup (requires backend endpoint you will add)
+    document.getElementById("doctorSignupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try{
+        const payload = {
+          name: document.getElementById("docName").value.trim(),
+          email: document.getElementById("docEmail").value.trim(),
+          password: document.getElementById("docPassword").value,
+          organization: document.getElementById("docOrg").value.trim()
+        };
+        await api("/doctor-signup", { method:"POST", body: payload });
+        msg.style.display = "block";
+        show("Request submitted. Wait for admin approval.", "ok");
+        e.target.reset();
+      } catch(err){
+        msg.style.display = "block";
+        show(err.message || "Signup failed", "err");
+      }
+    });
+  </script>
+</body>
+</html>

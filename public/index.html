@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shravs Teleradiology & E‑Care</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:#000;color:#fff;overflow-x:hidden}
+    .hero{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(135deg,#000 0%,#1a1a1a 50%,#000 100%);position:relative}
+    .wrap{max-width:1200px;margin:0 auto;width:100%}
+    .logo{width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #fff;background:#000;display:block;margin:0 auto 16px}
+    h1{margin:0;text-align:center;text-transform:uppercase;letter-spacing:2px;line-height:1.2}
+    .tag{color:#bbb;text-align:center;margin-top:10px;font-size:1.1em}
+    .cta{margin-top:22px;text-align:center}
+    .btn{display:inline-block;padding:14px 26px;border-radius:999px;border:2px solid #fff;background:#fff;color:#000;font-weight:900;text-transform:uppercase;text-decoration:none;margin:6px}
+    .btn.alt{background:transparent;color:#fff;border-color:#0ea5e9}
+    .section{padding:60px 20px;border-top:1px solid #222}
+    .section h2{text-align:center;color:#0ea5e9;text-transform:uppercase;letter-spacing:2px;margin:0 0 18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+    .card{background:#0a0a0a;border:1px solid #333;border-radius:16px;padding:16px}
+    .card .name{font-weight:900}
+    .card .meta{color:#888;margin-top:6px}
+    .query-box{max-width:760px;margin:0 auto}
+    label{display:block;margin:10px 0 6px;color:#cfcfcf;font-weight:800;font-size:.85em;text-transform:uppercase}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #333;background:#000;color:#fff}
+    textarea{min-height:120px;resize:vertical}
+    .msg{display:none;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #333;background:#050505;color:#bbb}
+    .msg.ok{display:block;border-color:#22c55e;background:#0f2f1c;color:#22c55e}
+    .msg.err{display:block;border-color:#ef4444;background:#2f0f0f;color:#ef4444}
+    footer{padding:30px 20px;border-top:1px solid #222;color:#888;text-align:center}
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="wrap">
+      <img class="logo" src="/logo.png" onerror="this.onerror=null;this.src='https://i.ibb.co/FL6BLkS/P-Untitled-design.png';" alt="Shravs Logo">
+      <h1>Shravs Teleradiology<br/>E‑Care Services</h1>
+      <div class="tag">Advanced Healthcare Solutions, Delivered Digitally</div>
+      <div class="cta">
+        <a class="btn" href="login.html">Login</a>
+        <a class="btn alt" href="#query">Raise a Query</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="clinic">
+    <div class="wrap">
+      <h2>Clinic Team</h2>
+      <div id="doctorsGrid" class="grid"></div>
+      <div id="doctorsHint" style="color:#777;text-align:center;margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <section class="section" id="technical">
+    <div class="wrap">
+      <h2>Technical Team</h2>
+      <div id="employeesGrid" class="grid"></div>
+      <div id="employeesHint" style="color:#777;text-align:center;margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <section class="section" id="query">
+    <div class="wrap query-box">
+      <h2>Raise a Query</h2>
+      <div id="msg" class="msg"></div>
+
+      <form id="queryForm">
+        <label>Query type</label>
+        <select id="qType" required>
+          <option value="general">General</option>
+          <option value="teleradiology">Teleradiology</option>
+          <option value="ecare">E‑Care</option>
+          <option value="partnership">Partnership</option>
+        </select>
+
+        <label>Your name</label>
+        <input id="qName" required placeholder="Full name">
+
+        <label>Designation/Organization</label>
+        <input id="qOrg" required placeholder="Clinic/Hospital/Company">
+
+        <label>Email</label>
+        <input id="qEmail" type="email" required placeholder="you@example.com">
+
+        <label>Phone</label>
+        <input id="qPhone" placeholder="+91 ...">
+
+        <label>Message</label>
+        <textarea id="qMsg" required placeholder="Write your query..."></textarea>
+
+        <a class="btn" href="login.html" style="background:transparent;color:#fff;border-color:#0ea5e9;">Login to submit</a>
+        <button class="btn" type="submit">Submit (if logged in)</button>
+      </form>
+
+      <div style="color:#777;margin-top:10px;">
+        Query submission requires login token (secure). If not logged in, use the Login button first.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Shravs Teleradiology and E‑Care Services • Vijayawada, Andhra Pradesh
+  </footer>
+
+  <script type="module">
+    const API_BASE = "/api";
+
+    function showMsg(text, type){
+      const box = document.getElementById("msg");
+      box.textContent = text;
+      box.className = "msg " + type;
+      box.style.display = "block";
+    }
+
+    async function api(path, { method="GET", body=null } = {}) {
+      const token = localStorage.getItem("token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : null });
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      return data;
+    }
+
+    function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[c])); }
+
+    function renderPeople(gridId, hintId, list, emptyText){
+      const grid = document.getElementById(gridId);
+      const hint = document.getElementById(hintId);
+
+      if (!list?.length) {
+        grid.innerHTML = "";
+        hint.textContent = emptyText;
+        return;
+      }
+
+      hint.textContent = "";
+      grid.innerHTML = list.map(p => `
+        <div class="card">
+          <div class="name">${esc(p.name || "Unknown")}</div>
+          <div class="meta">${esc(p.organization || "")}</div>
+        </div>
+      `).join("");
+    }
+
+    async function loadTeams(){
+      try{
+        const doctors = await api("/team?role=doctor");
+        renderPeople("doctorsGrid", "doctorsHint", doctors.items, "No approved doctors yet.");
+      }catch{
+        renderPeople("doctorsGrid", "doctorsHint", [], "Team API not enabled yet.");
+      }
+
+      try{
+        const employees = await api("/team?role=employee");
+        renderPeople("employeesGrid", "employeesHint", employees.items, "No employees listed yet.");
+      }catch{
+        renderPeople("employeesGrid", "employeesHint", [], "Team API not enabled yet.");
+      }
+    }
+
+    document.getElementById("queryForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try{
+        await api("/queries", {
+          method: "POST",
+          body: {
+            type: document.getElementById("qType").value,
+            name: document.getElementById("qName").value.trim(),
+            designation: document.getElementById("qOrg").value.trim(),
+            email: document.getElementById("qEmail").value.trim(),
+            phone: document.getElementById("qPhone").value.trim(),
+            message: document.getElementById("qMsg").value.trim()
+          }
+        });
+        showMsg("Query submitted to admin.", "ok");
+        e.target.reset();
+      } catch(err){
+        showMsg(err.message || "Query submit failed", "err");
+      }
+    });
+
+    loadTeams();
+  </script>
+</body>
+</html>
