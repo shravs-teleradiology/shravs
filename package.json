@@ -1,0 +1,10 @@
+{
+  "name": "shravs-teleradiology",
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
